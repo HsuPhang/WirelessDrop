@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WirelessDrop - 旧版上传页</title>
+    <link rel="icon" href="{{ url_for('static', filename='Wireless_Drop.ico') }}" type="image/x-icon">
+    <!-- 引入静态资源 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <header>
+            <div class="header-content">
+                <h1 class="logo">📦 WirelessDrop</h1>
+                <button class="mode-toggle">切换到浅色模式</button>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main-content" style="grid-template-columns: 1fr;">
+            <!-- 上传区域 -->
+            <section class="upload-section">
+                <h2 class="section-title">旧版文件上传</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">这是旧版上传页面，为了兼容而保留。推荐使用<a href="/" style="color: var(--accent-color);">新版页面</a>获得更好的体验。</p>
+                
+                <!-- 异步文件上传 -->
+                <div class="file-input-container" style="margin-bottom: 20px;">
+                    <input type="file" name="file" id="file" class="file-input">
+                    <label for="file" class="file-input-label">选择文件</label>
+                </div>
+                <button id="upload-btn" class="file-input-label" style="border: none;">上传文件</button>
+                
+                <!-- 进度条 -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text"></div>
+                </div>
+                
+                <!-- 消息提示 -->
+                <div id="message" style="margin-top: 20px; padding: 10px; border-radius: 5px; display: none;"></div>
+                
+                <!-- QR码区域 -->
+                <div class="qr-section" style="margin-top: 30px;">
+                    <h3 class="section-title" style="font-size: 1.1rem;">扫码访问</h3>
+                    <div class="qr-code">
+                        <img src="{{ url_for('static', filename='images/qr.png') }}" alt="QR Code">
+                    </div>
+                    <p class="qr-text">
+                        或直接访问：
+                        <a href="http://{{ local_ip }}:5000" class="qr-code-link">http://{{ local_ip }}:5000</a>
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <!-- 页面底部 -->
+        <footer>
+            <p>© 2026 WirelessDrop - 简单高效的文件传输工具</p>
+        </footer>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script type="module">
+        import { initDarkMode, toggleDarkMode, showMessage } from '{{ url_for('static', filename='js/utils.js') }}';
+        
+        // 初始化深色模式
+        initDarkMode();
+        
+        // 深色模式切换
+        const modeToggle = document.querySelector('.mode-toggle');
+        if (modeToggle) {
+            modeToggle.addEventListener('click', toggleDarkMode);
+        }
+        
+        // 异步上传功能
+        const fileInput = document.getElementById('file');
+        const uploadBtn = document.getElementById('upload-btn');
+        const progressContainer = document.querySelector('.progress-container');
+        const progressFill = document.querySelector('.progress-fill');
+        const progressText = document.querySelector('.progress-text');
+        const messageDiv = document.getElementById('message');
+        
+        // 显示消息
+        function showMessage(text, type = 'info') {
+            messageDiv.textContent = text;
+            messageDiv.className = type;
+            messageDiv.style.display = 'block';
+            messageDiv.style.backgroundColor = type === 'success' ? '#d4edda' : 
+                                             type === 'error' ? '#f8d7da' : '#d1ecf1';
+            messageDiv.style.color = type === 'success' ? '#155724' : 
+                                   type === 'error' ? '#721c24' : '#0c5460';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 显示进度条
+        function showProgress() {
+            progressContainer.classList.add('visible');
+        }
+        
+        // 隐藏进度条
+        function hideProgress() {
+            progressContainer.classList.remove('visible');
+            progressFill.style.width = '0%';
+            progressText.textContent = '';
+        }
+        
+        // 更新进度条
+        function updateProgress(percent, filename) {
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = filename ? `${filename} - ${percent.toFixed(1)}%` : '';
+        }
+        
+        // 上传文件
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // 创建XHR对象
+            const xhr = new XMLHttpRequest();
+            
+            // 设置超时时间（10分钟）
+            xhr.timeout = 600000;
+            
+            // 显示进度条
+            showProgress();
+            
+            // 更新进度
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    updateProgress(percentComplete, file.name);
+                }
+            });
+            
+            // 上传完成
+            xhr.addEventListener('load', () => {
+                hideProgress();
+                
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            showMessage(`文件上传成功: ${file.name}`, 'success');
+                        } else {
+                            showMessage(`文件上传失败: ${response.error}`, 'error');
+                        }
+                    } catch (error) {
+                        showMessage(`文件上传成功，但解析响应失败: ${file.name}`, 'info');
+                    }
+                } else {
+                    showMessage(`文件上传失败: HTTP ${xhr.status}`, 'error');
+                }
+            });
+            
+            // 上传错误
+            xhr.addEventListener('error', () => {
+                hideProgress();
+                showMessage(`文件上传错误: ${file.name}`, 'error');
+            });
+            
+            // 上传超时
+            xhr.addEventListener('timeout', () => {
+                hideProgress();
+                showMessage(`文件上传超时: ${file.name}`, 'error');
+            });
+            
+            // 发送请求
+            xhr.open('POST', '/upload');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.send(formData);
+        }
+        
+        // 上传按钮点击事件
+        uploadBtn.addEventListener('click', () => {
+            if (fileInput.files.length > 0) {
+                uploadFile(fileInput.files[0]);
+                // 清除文件输入的value，允许用户再次选择相同的文件
+                fileInput.value = '';
+            } else {
+                showMessage('请先选择一个文件', 'info');
+            }
+        });
+        
+        // 文件选择事件
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                uploadBtn.textContent = `上传 ${fileInput.files[0].name}`;
+            } else {
+                uploadBtn.textContent = '上传文件';
+            }
+        });
+    </script>
+</body>
+</html>

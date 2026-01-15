@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WirelessDrop - 文件传输工具</title>
+    <link rel="icon" href="{{ url_for('static', filename='Wireless_Drop.ico') }}" type="image/x-icon">
+    <!-- 引入静态资源 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- 引入Socket.io客户端库 -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面头部 -->
+        <header>
+            <div class="header-content">
+                <h1 class="logo">📦 WirelessDrop</h1>
+                <button class="mode-toggle">切换到浅色模式</button>
+            </div>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 左侧上传区域 -->
+            <section class="upload-section">
+                <h2 class="section-title">上传文件</h2>
+                
+                <!-- 拖放区域 -->
+                <div class="drop-zone">
+                    <div class="drop-zone-icon">📤</div>
+                    <div class="drop-zone-text">拖拽文件到此处或点击选择文件</div>
+                    <div class="drop-zone-hint">支持多文件上传，最大50GB</div>
+                </div>
+                
+                <!-- 文件输入区域 -->
+                <div class="file-input-container">
+                    <input type="file" id="file-input" class="file-input" multiple>
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text"></div>
+                </div>
+                
+                <!-- QR码区域 -->
+                <div class="qr-section">
+                    <h3 class="section-title" style="font-size: 1.1rem;">扫码访问</h3>
+                    <div class="qr-code">
+                        <img src="{{ url_for('static', filename='images/qr.png') }}" alt="QR Code">
+                    </div>
+                    <p class="qr-text">
+                        或直接访问：
+                        <a href="http://{{ local_ip }}:5000" class="qr-code-link">http://{{ local_ip }}:5000</a>
+                    </p>
+                </div>
+            </section>
+
+            <!-- 右侧边栏 -->
+            <aside class="sidebar">
+                <!-- 文件列表 -->
+                <section class="file-list-section">
+                    <h2 class="section-title">文件列表</h2>
+                    <div class="files-container"></div>
+                </section>
+                
+                <!-- 日志区域 -->
+                <section class="log-section">
+                    <h2 class="section-title">实时日志</h2>
+                    <div class="logs-container"></div>
+                </section>
+            </aside>
+        </main>
+
+        <!-- 页面底部 -->
+        <footer>
+            <p>Copyright©2026 WirelessDrop - 简单高效的文件传输工具</p>
+            <p>Powered by Hsu Phang</p>
+        </footer>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
